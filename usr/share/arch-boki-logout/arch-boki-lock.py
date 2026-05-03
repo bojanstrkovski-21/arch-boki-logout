@@ -144,6 +144,7 @@ class LockScreen:
         self._setup_window()
         self._build_ui()
         self._update_clock()
+        self.root.update_idletasks()
         self.root.attributes("-alpha", self.opacity)
         if not IS_WAYLAND:
             self.root.after(200, self._grab_input)
@@ -182,7 +183,7 @@ class LockScreen:
             bg=CS["bg"], fg=CS["gear_normal"],
             cursor="hand2",
         )
-        self.gear_btn.place(relx=1.0, rely=0.0, anchor="ne", x=-18, y=14)
+        self.gear_btn.place(x=18, y=14)
         self.gear_btn.bind("<Enter>",    lambda e: self.gear_btn.config(fg=CS["gear_hover"]))
         self.gear_btn.bind("<Leave>",    lambda e: self.gear_btn.config(fg=CS["gear_normal"]))
         self.gear_btn.bind("<Button-1>", lambda e: self._open_settings())
@@ -273,7 +274,7 @@ class LockScreen:
         self.root.update_idletasks()
         gx = self.gear_btn.winfo_rootx()
         gy = self.gear_btn.winfo_rooty()
-        win.geometry(f"+{gx - 160}+{gy + self.gear_btn.winfo_height() + 4}")
+        win.geometry(f"+{gx}+{gy + self.gear_btn.winfo_height() + 4}")
 
         pb = CS["popover_bg"]
         pf = CS["popover_field"]
