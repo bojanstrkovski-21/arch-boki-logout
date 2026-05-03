@@ -49,12 +49,24 @@ else:
     CMD_RESTART   = "systemctl reboot"
 
 # ── lock command ──────────────────────────────────────────────────────────────
-if os.path.isfile("/usr/bin/betterlockscreen"):
-    CMD_LOCK = "betterlockscreen -l"
-elif os.path.isfile("/usr/bin/i3lock"):
-    CMD_LOCK = "i3lock"
+if os.path.isfile("/usr/bin/arch-boki-lock"):
+    CMD_LOCK = "arch-boki-lock"
+elif IS_WAYLAND:
+    if os.path.isfile("/usr/bin/hyprlock"):
+        CMD_LOCK = "hyprlock"
+    elif os.path.isfile("/usr/bin/gtklock"):
+        CMD_LOCK = "gtklock"
+    elif os.path.isfile("/usr/bin/swaylock"):
+        CMD_LOCK = "swaylock"
+    else:
+        CMD_LOCK = "loginctl lock-session"
 else:
-    CMD_LOCK = "xdg-screensaver lock"
+    if os.path.isfile("/usr/bin/betterlockscreen"):
+        CMD_LOCK = "betterlockscreen -l"
+    elif os.path.isfile("/usr/bin/i3lock"):
+        CMD_LOCK = "i3lock"
+    else:
+        CMD_LOCK = "xdg-screensaver lock"
 
 # ── session detection ─────────────────────────────────────────────────────────
 def _detect_desktop():
