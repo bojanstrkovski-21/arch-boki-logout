@@ -13,6 +13,7 @@ import sys
 import os
 import io
 import configparser
+import functools
 from PIL import Image, ImageTk
 
 # ── lock file — prevent double launch ────────────────────────────────────────
@@ -69,6 +70,7 @@ else:
         CMD_LOCK = "xdg-screensaver lock"
 
 # ── session detection ─────────────────────────────────────────────────────────
+@functools.lru_cache(maxsize=None)
 def _detect_desktop():
     desktop = "unknown"
     try:
@@ -82,11 +84,12 @@ def _detect_desktop():
     except Exception:
         desktop = "unknown"
 
-    if os.system("systemctl is-active --quiet ly") == 0:
+    if subprocess.run(["systemctl", "is-active", "--quiet", "ly"],
+                        stderr=subprocess.DEVNULL).returncode == 0:
         try:
             out = subprocess.run(
                 ["sh", "-c", "env | grep XDG_CURRENT_DESKTOP"],
-                shell=False, stdout=subprocess.PIPE,
+                shell=False, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             )
             desktop = out.stdout.decode().split("=")[1].strip().split(":")[0].lower()
         except Exception:
@@ -155,7 +158,11 @@ def _get_logout_cmd():
         print(f"[arch-boki-logout] unknown session, falling back to: pkill {name}")
         return f"pkill {name}"
 
-    return f"pkill -KILL -u {os.environ.get('USER', '')}"
+    # Safe fallback: let loginctl/systemd cleanly end the session
+    xdg_session = os.environ.get("XDG_SESSION_ID", "")
+    if xdg_session:
+        return f"loginctl terminate-session {xdg_session}"
+    return f"loginctl terminate-user {os.environ.get('USER', '')}"
 
 
 LOGOUT_CMD = _get_logout_cmd()
