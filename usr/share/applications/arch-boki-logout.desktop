@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=arch-boki-logout
+Comment=Minimal session-end overlay
+Exec=arch-boki-logout
+Icon=system-log-out
+Terminal=false
+Type=Application
+Categories=System;
+Keywords=logout;shutdown;restart;lock;session;
