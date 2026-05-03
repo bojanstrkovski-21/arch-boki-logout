@@ -20,7 +20,7 @@ IS_WAYLAND = os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
 COLORS_DIR  = os.path.join(SCRIPT_DIR, "colors")
 CONFIG_DIR  = os.path.expanduser("~/.config/arch-boki-logout")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "arch-boki-logout.conf")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "arch-boki-lock.conf")
 
 FONT_HINT = ("Inter", 9, "bold italic")
 
@@ -89,11 +89,11 @@ def _load_config():
     if os.path.isfile(CONFIG_FILE):
         parser.read(CONFIG_FILE)
         try:
-            opacity = int(parser.get("lock", "opacity")) / 100
+            opacity = int(parser.get("settings", "opacity")) / 100
         except Exception:
             pass
         try:
-            colorscheme = parser.get("lock", "colorscheme")
+            colorscheme = parser.get("settings", "colorscheme")
         except Exception:
             pass
     return opacity, colorscheme
@@ -103,10 +103,10 @@ def _save_config(opacity: float, colorscheme: str):
     parser = configparser.RawConfigParser()
     if os.path.isfile(CONFIG_FILE):
         parser.read(CONFIG_FILE)
-    if not parser.has_section("lock"):
-        parser.add_section("lock")
-    parser.set("lock", "opacity",     str(int(round(opacity * 100))))
-    parser.set("lock", "colorscheme", colorscheme)
+    if not parser.has_section("settings"):
+        parser.add_section("settings")
+    parser.set("settings", "opacity",     str(int(round(opacity * 100))))
+    parser.set("settings", "colorscheme", colorscheme)
     with open(CONFIG_FILE, "w") as f:
         parser.write(f)
 
