@@ -288,9 +288,16 @@ def _svg_to_photoimage(svg_path, size=ICON_SIZE):
         return None
 
 def _load_icon(action, theme, size):
-    path = os.path.join(THEMES_DIR, theme, f"{action}.svg")
-    if os.path.isfile(path):
-        return _svg_to_photoimage(path, size)
+    svg_path = os.path.join(THEMES_DIR, theme, f"{action}.svg")
+    if os.path.isfile(svg_path):
+        return _svg_to_photoimage(svg_path, size)
+    png_path = os.path.join(THEMES_DIR, theme, f"{action}.png")
+    if os.path.isfile(png_path):
+        try:
+            img = Image.open(png_path).resize((size, size), Image.LANCZOS)
+            return ImageTk.PhotoImage(img)
+        except Exception as e:
+            print(f"[arch-boki-logout] icon load failed: {png_path}: {e}", file=sys.stderr)
     return None
 
 # ── constants ─────────────────────────────────────────────────────────────────
