@@ -96,14 +96,18 @@ def _detect_desktop():
             desktop = "unknown"
 
     if desktop == "unknown":
-        for wm in ("ohmychadwm", "chadwm"):
+        for wm, wm_key in (
+            ("ohmychadwm", "ohmychadwm"),
+            ("chadwm",     "chadwm"),
+            ("Hyprland",   "hyprland"),
+        ):
             try:
                 if subprocess.run(
                     ["pgrep", "-x", wm],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 ).returncode == 0:
-                    desktop = wm
+                    desktop = wm_key
                     break
             except Exception:
                 pass
@@ -131,9 +135,11 @@ def _get_logout_cmd():
                      "/usr/share/xsessions/gnome-xorg",
                      "/usr/share/xsessions/gnome-classic"):
         return "gnome-session-quit --logout --no-prompt"
-    elif desktop in ("hyprland", "hyprland-uwsm",
-                     "/usr/share/wayland-sessions/hyprland",
-                     "/usr/share/wayland-sessions/hyprland-uwsm"):
+    elif desktop in ("hyprland", "/usr/share/wayland-sessions/hyprland"):
+        return "hyprctl dispatch exit"
+    elif desktop in ("hyprland-uwsm", "/usr/share/wayland-sessions/hyprland-uwsm"):
+        if os.path.isfile("/usr/bin/uwsm"):
+            return "uwsm stop"
         return "hyprctl dispatch exit"
 
     pkill_x11 = [
