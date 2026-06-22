@@ -95,6 +95,11 @@ def _detect_desktop():
         except Exception:
             desktop = "unknown"
 
+    # HYPRLAND_INSTANCE_SIGNATURE is always set inside a Hyprland session
+    if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+        desktop = "hyprland-uwsm" if os.environ.get("UWSM_MANAGED") else "hyprland"
+        return desktop
+
     if desktop == "unknown":
         for wm, wm_key in (
             ("ohmychadwm", "ohmychadwm"),
@@ -136,11 +141,14 @@ def _get_logout_cmd():
                      "/usr/share/xsessions/gnome-classic"):
         return "gnome-session-quit --logout --no-prompt"
     elif desktop in ("hyprland", "/usr/share/wayland-sessions/hyprland"):
-        return "hyprctl dispatch exit"
+        if os.path.isfile("/usr/bin/hyprctl"):
+            return "hyprctl dispatch exit"
+        return "pkill -x Hyprland"
     elif desktop in ("hyprland-uwsm", "/usr/share/wayland-sessions/hyprland-uwsm"):
-        if os.path.isfile("/usr/bin/uwsm"):
-            return "uwsm stop"
-        return "hyprctl dispatch exit"
+        for uwsm in ("/usr/bin/uwsm", "/usr/local/bin/uwsm"):
+            if os.path.isfile(uwsm):
+                return f"{uwsm} stop"
+        return "pkill -x Hyprland"
 
     pkill_x11 = [
         "bspwm", "jwm", "openbox", "awesome", "qtile", "xmonad",
