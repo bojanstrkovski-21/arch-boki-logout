@@ -51,17 +51,24 @@ else:
     CMD_RESTART   = "systemctl reboot"
 
 # ── lock command ──────────────────────────────────────────────────────────────
-if os.path.isfile("/usr/bin/arch-boki-lock"):
-    CMD_LOCK = "arch-boki-lock"
-elif IS_WAYLAND:
+# Tkinter has no native Wayland backend (runs via XWayland), so arch-boki-lock
+# can't grab input compositor-wide there — prefer a real ext-session-lock-v1
+# locker on Wayland and only fall back to arch-boki-lock as a last resort.
+if IS_WAYLAND:
     if os.path.isfile("/usr/bin/hyprlock"):
         CMD_LOCK = "hyprlock"
-    elif os.path.isfile("/usr/bin/gtklock"):
-        CMD_LOCK = "gtklock"
     elif os.path.isfile("/usr/bin/swaylock"):
         CMD_LOCK = "swaylock"
+    elif os.path.isfile("/usr/bin/gtklock"):
+        CMD_LOCK = "gtklock"
+    elif os.path.isfile("/usr/bin/waylock"):
+        CMD_LOCK = "waylock"
+    elif os.path.isfile("/usr/bin/arch-boki-lock"):
+        CMD_LOCK = "arch-boki-lock"
     else:
         CMD_LOCK = "loginctl lock-session"
+elif os.path.isfile("/usr/bin/arch-boki-lock"):
+    CMD_LOCK = "arch-boki-lock"
 else:
     if os.path.isfile("/usr/bin/betterlockscreen"):
         CMD_LOCK = "betterlockscreen -l"
