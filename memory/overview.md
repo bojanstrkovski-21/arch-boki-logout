@@ -11,16 +11,20 @@ managers/desktop environments like Hyprland, i3, GNOME, XFCE, sway, etc).
   restart, lock, logout. Auto-detects the running desktop/WM (env vars, pgrep,
   Hyprland signature, ly display manager) and picks the right shutdown/restart/
   logout/lock command per desktop (systemctl vs loginctl on Artix, pkill for WM
-  fallback, hyprctl for Hyprland, etc). Has a settings gear popover: opacity
-  slider, icon size slider, colorscheme picker, theme (icon set) picker. Single-
-  instance guarded via `/tmp/arch-boki-logout.lock`. Keyboard shortcuts:
-  Esc/S/R/K/L.
+  fallback, hyprctl for Hyprland, etc). Commands are parsed with `shlex.split`
+  (not naive `.split()`) so quoted arguments with embedded spaces survive
+  intact. Has a settings gear popover: opacity slider, icon size slider,
+  colorscheme picker, theme (icon set) picker. Single-instance guarded via
+  `/tmp/arch-boki-logout.lock`. Keyboard shortcuts: Esc/S/R/K/L.
 - [usr/share/arch-boki-logout/arch-boki-lock.py](../usr/share/arch-boki-logout/arch-boki-lock.py)
   — standalone lock screen. Tkinter fullscreen, PAM authentication (via
   python-pam, falling back to `unix_chkpwd`), clock/date/username display,
   password entry, same colorscheme/opacity settings popover pattern as the
-  logout screen. Grabs input globally on X11; best-effort fullscreen on
-  Wayland (no global grab available).
+  logout screen. Grabs input globally on X11 (`grab_set_global`, delayed
+  200ms so it's applied after the window manager actually maps the window —
+  same delay now applied to the Wayland focus call). On Wayland it's only a
+  best-effort fullscreen XWayland window — see the Wayland lock note below
+  for why it's no longer the default Wayland locker.
 - [usr/bin/arch-boki-logout](../usr/bin/arch-boki-logout) and
   [usr/bin/arch-boki-lock](../usr/bin/arch-boki-lock) — thin shell wrappers that
   exec the corresponding Python script (these are what get installed to PATH).
@@ -52,6 +56,22 @@ managers/desktop environments like Hyprland, i3, GNOME, XFCE, sway, etc).
 - Desktop/session detection logic in `arch-boki-logout.py` (`_detect_desktop`,
   `_get_logout_cmd`) is the most complex/fragile part — handles many WMs by
   name, with pkill fallback lists for X11 and Wayland compositors.
+- **Hyprland exit uses Lua-style dispatcher syntax**: on the user's Hyprland
+  build, the old `hyprctl dispatch exit` errors out — it now expects
+  `hyprctl dispatch hl.dsp.exit()`. Similarly, exiting a uwsm-managed
+  Hyprland session goes through `hyprctl eval 'hl.dsp.exec("uwsm stop")'`
+  rather than calling the `uwsm` binary directly, so it's routed through
+  Hyprland's own exec dispatcher. Both confirmed working by the user
+  2026-06-30. If Hyprland changes this syntax again in a future release,
+  start here.
+- **Wayland lock priority**: Tkinter has no native Wayland backend (it runs
+  via XWayland), so `arch-boki-lock` cannot do a real compositor-wide input
+  grab on Wayland — it only ever covered the single workspace/output it was
+  launched on. `CMD_LOCK` selection in `arch-boki-logout.py` therefore
+  prefers real `ext-session-lock-v1` lockers on Wayland, in order: hyprlock
+  → swaylock → gtklock → waylock → `arch-boki-lock` (last resort) →
+  `loginctl lock-session`. On X11, `arch-boki-lock` is still preferred first
+  since its `grab_set_global()` genuinely works there.
 
 See [repo-setup.md](repo-setup.md) for how changes get published, and
 [session-log.md](session-log.md) for a history of what's been done.
