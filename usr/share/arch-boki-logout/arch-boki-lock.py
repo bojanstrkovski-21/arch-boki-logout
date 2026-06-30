@@ -148,6 +148,8 @@ class LockScreen:
         self.root.attributes("-alpha", self.opacity)
         if not IS_WAYLAND:
             self.root.after(200, self._grab_input)
+        else:
+            self.root.after(200, self._focus_password)
         self.root.mainloop()
 
     # ── window setup ─────────────────────────────────────────────────────────
@@ -171,6 +173,10 @@ class LockScreen:
             self.root.grab_set_global()
         except tk.TclError:
             self.root.grab_set()
+        self._focus_password()
+
+    def _focus_password(self):
+        self.root.focus_force()
         self.pw_entry.focus_force()
 
     # ── UI ───────────────────────────────────────────────────────────────────

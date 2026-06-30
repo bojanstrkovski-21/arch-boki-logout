@@ -14,6 +14,7 @@ import os
 import io
 import configparser
 import functools
+import shlex
 from PIL import Image, ImageTk
 
 # ── lock file — prevent double launch ────────────────────────────────────────
@@ -142,12 +143,11 @@ def _get_logout_cmd():
         return "gnome-session-quit --logout --no-prompt"
     elif desktop in ("hyprland", "/usr/share/wayland-sessions/hyprland"):
         if os.path.isfile("/usr/bin/hyprctl"):
-            return "hyprctl dispatch exit"
+            return "hyprctl dispatch hl.dsp.exit()"
         return "pkill -x Hyprland"
     elif desktop in ("hyprland-uwsm", "/usr/share/wayland-sessions/hyprland-uwsm"):
-        for uwsm in ("/usr/bin/uwsm", "/usr/local/bin/uwsm"):
-            if os.path.isfile(uwsm):
-                return f"{uwsm} stop"
+        if os.path.isfile("/usr/bin/hyprctl"):
+            return """hyprctl eval 'hl.dsp.exec("uwsm stop")'"""
         return "pkill -x Hyprland"
 
     pkill_x11 = [
@@ -182,10 +182,10 @@ def _get_logout_cmd():
 LOGOUT_CMD = _get_logout_cmd()
 
 COMMANDS = {
-    "logout":   LOGOUT_CMD.split(),
-    "shutdown": CMD_SHUTDOWN.split(),
-    "restart":  CMD_RESTART.split(),
-    "lock":     CMD_LOCK.split(),
+    "logout":   shlex.split(LOGOUT_CMD),
+    "shutdown": shlex.split(CMD_SHUTDOWN),
+    "restart":  shlex.split(CMD_RESTART),
+    "lock":     shlex.split(CMD_LOCK),
 }
 
 # ── config persistence ────────────────────────────────────────────────────────
